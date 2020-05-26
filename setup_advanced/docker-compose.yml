@@ -1,0 +1,232 @@
+version: '3.5'
+services:
+
+# 2 nodos maestros
+# 2 nodos datos
+# 2 nodo ingesta
+# 1 nodos coordinacion
+
+  master1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    container_name: master1
+    environment:
+      - node.name=master1
+      - cluster.name=cluster-es
+      - discovery.seed_hosts=master1,master2,data1,data2,ingest1,ingest2,coordinator1
+      - cluster.initial_master_nodes=master1,master2
+      - node.master=true
+      - node.data=false
+      - node.ingest=false
+      - node.voting_only=false
+      #- node.remote_cluster_client=false
+      - cluster.remote.connect=false  
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms100m -Xmx100m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+  master2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    container_name: master2
+    environment:
+      - node.name=master2
+      - cluster.name=cluster-es
+      - discovery.seed_hosts=master1,master2,data1,data2,ingest1,ingest2,coordinator1
+      - cluster.initial_master_nodes=master1,master2
+      - node.master=true
+      - node.data=false
+      - node.ingest=false
+      - node.voting_only=false
+      #- node.remote_cluster_client=false
+      - cluster.remote.connect=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms100m -Xmx100m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data02:/usr/share/elasticsearch/data
+  data1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    container_name: data1
+    environment:
+      - node.name=data1
+      - cluster.name=cluster-es
+      - discovery.seed_hosts=master1,master2,data1,data2,ingest1,ingest2,coordinator1
+      - cluster.initial_master_nodes=master1,master2
+      - node.master=true
+      - node.data=true
+      - node.ingest=false
+      - node.voting_only=true
+      #- node.remote_cluster_client=false
+      - cluster.remote.connect=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms100m -Xmx100m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data03:/usr/share/elasticsearch/data
+  data2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    container_name: data2
+    environment:
+      - node.name=data2
+      - cluster.name=cluster-es
+      - discovery.seed_hosts=master1,master2,data1,data2,ingest1,ingest2,coordinator1
+      - cluster.initial_master_nodes=master1,master2
+      - node.master=false
+      - node.data=true
+      - node.ingest=false
+      - node.voting_only=false
+      #- node.remote_cluster_client=false
+      - cluster.remote.connect=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms100m -Xmx100m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data04:/usr/share/elasticsearch/data
+  ingest1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    container_name: ingest1
+    environment:
+      - node.name=ingest1
+      - cluster.name=cluster-es
+      - discovery.seed_hosts=master1,master2,data1,data2,ingest1,ingest2,coordinator1
+      - cluster.initial_master_nodes=master1,master2
+      - node.master=false
+      - node.data=false
+      - node.ingest=true
+      - node.voting_only=false
+      #- node.remote_cluster_client=false
+      - cluster.remote.connect=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms100m -Xmx100m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data05:/usr/share/elasticsearch/data
+  ingest2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    container_name: ingest2
+    environment:
+      - node.name=ingest2
+      - cluster.name=cluster-es
+      - discovery.seed_hosts=master1,master2,data1,data2,ingest1,ingest2,coordinator1
+      - cluster.initial_master_nodes=master1,master2
+      - node.master=false
+      - node.data=false
+      - node.ingest=true
+      - node.voting_only=false
+      #- node.remote_cluster_client=false
+      - cluster.remote.connect=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms100m -Xmx100m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data06:/usr/share/elasticsearch/data
+  coordinator1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    container_name: coordinator1
+    environment:
+      - node.name=coordinator1
+      - cluster.name=cluster-es
+      - discovery.seed_hosts=master1,master2,data1,data2,ingest1,ingest2,coordinator1
+      - cluster.initial_master_nodes=master1,master2
+      - node.master=false
+      - node.data=false
+      - node.ingest=false
+      - node.voting_only=false
+      #- node.remote_cluster_client=false
+      - cluster.remote.connect=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms100m -Xmx100m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data07:/usr/share/elasticsearch/data
+  cerebro:
+    image: lmenezes/cerebro:0.8.5
+    container_name: cerebro
+    volumes:
+      - ./application.conf:/opt/cerebro/conf/application.conf
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.5.2
+    container_name: kibana
+    environment:
+      ELASTICSEARCH_HOSTS: "http://nginx:8082"
+      SERVER_NAME: "kibana"
+      SERVER_HOST: "kibana"
+      ELASTICSEARCH_USERNAME: "elastic"
+      ELASTICSEARCH_PASSWORD: "password"
+
+  nginx: 
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx_error.log:/etc/nginx/error_log.log
+    ports:
+      - 8080:8080
+      - 8081:8081
+      - 8082:8082
+      
+volumes:
+  data01:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/var/elasticsearch/data01'
+  data02:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/var/elasticsearch/data02'
+  data03:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/var/elasticsearch/data03'
+  data04:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/var/elasticsearch/data04'
+  data05:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/var/elasticsearch/data05'
+  data06:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/var/elasticsearch/data06'
+  data07:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/var/elasticsearch/data07'
